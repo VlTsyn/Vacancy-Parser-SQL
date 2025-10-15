@@ -1,19 +1,12 @@
-import os
-from src.hh import HH
-from src.employer import Employer
-from src.create_DB import create_tables, clear_database
+from typing import Dict, List
+
+from src.create_DB import clear_database, create_tables
 from src.DB_manager import DBManager
-from dotenv import load_dotenv
-
-load_dotenv()
-
-DB_HOST = os.getenv("DB_HOST")
-DB_DATA = os.getenv("DB_DATA")
-DB_USER = os.getenv("DB_USER")
-DB_PASS = os.getenv("DB_PASS")
+from src.employer import Employer
+from src.hh import HH
 
 
-def user_interface():
+def user_interface() -> None:
     """Функция взаимодействия с пользователем"""
 
     while True:
@@ -47,7 +40,11 @@ def user_interface():
             params = get_db_params()
             manager = DBManager(**params)
 
-            database_manage(manager)
+            if manager.connect() == "error":
+                print(f"Базы Данных {params['database']} не существует")
+            else:
+                print(f"Подключение к Базе Данных {params['database']} установлено")
+                database_manage(manager)
 
         elif choice == "3":
             print("До свидания!")
@@ -57,20 +54,20 @@ def user_interface():
             print("Неверный выбор. Попробуйте снова")
 
 
-def get_db_params():
+def get_db_params() -> Dict[str, str]:
     """Запрос параметров для Базы Данных"""
 
     print("Введите параметры для Базы Данных или оставьте поле пустым для значений по умолчанию")
     params = {
-        'host': input(f"Имя хоста [{DB_HOST}]: ").strip() or DB_HOST,
-        'database': input(f"Название базы данных [{DB_DATA}]: ").strip() or DB_DATA,
-        'user': input(f"Имя пользователя [{DB_USER}]: ").strip() or DB_USER,
-        'password': input("Пароль: ").strip() or DB_PASS
+        "host": input(f"Имя хоста [localhost]: ").strip() or "localhost",
+        "database": input(f"Название базы данных [HH_DB]: ").strip() or "HH_DB",
+        "user": input(f"Имя пользователя [postgres]: ").strip() or "postgres",
+        "password": input("Пароль: ").strip() or "",
     }
     return params
 
 
-def database_manage(manager):
+def database_manage(manager: DBManager) -> None:
     """Функция взаимодействия с Базой Данных"""
 
     print("\nВыберите действие:")
@@ -87,7 +84,7 @@ def database_manage(manager):
 
         result = manager.get_companies_and_vacancies_count()
         for r in result:
-            print(f"Компания: {r['name']} | Кол-во вакансий: {r['vacancies']}")
+            print(f"Компания: {r['name']} | " f"Кол-во вакансий: {r['vacancies']}")
 
         database_manage(manager)
 
@@ -95,7 +92,12 @@ def database_manage(manager):
 
         result = manager.get_all_vacancies()
         for r in result:
-            print(f"Компания: '{r['company_name']}' | Вакансия: {r['vacancy_name']} | Зарплата: {r['salary']} | Ссылка: {r['url']}")
+            print(
+                f"Компания: '{r['company_name']}' | "
+                f"Вакансия: {r['vacancy_name']} | "
+                f"Зарплата: {r['salary']} | "
+                f"Ссылка: {r['url']}"
+            )
 
         database_manage(manager)
 
@@ -110,7 +112,12 @@ def database_manage(manager):
 
         result = manager.get_vacancies_with_higher_salary()
         for r in result:
-            print(f"Компания: '{r['company_name']}' | Вакансия: {r['vacancy_name']} | Зарплата: {r['salary']} | Ссылка: {r['url']}")
+            print(
+                f"Компания: '{r['company_name']}' | "
+                f"Вакансия: {r['vacancy_name']} | "
+                f"Зарплата: {r['salary']} | "
+                f"Ссылка: {r['url']}"
+            )
 
         database_manage(manager)
 
@@ -118,8 +125,17 @@ def database_manage(manager):
 
         keyword = input("Введите ключевое слово: ")
         result = manager.get_vacancies_with_keyword(keyword)
-        for r in result:
-            print(f"Компания: '{r['company_name']}' | Вакансия: {r['vacancy_name']} | Зарплата: {r['salary']} | Ссылка: {r['url']}")
+
+        if result:
+            for r in result:
+                print(
+                    f"Компания: '{r['company_name']}' | "
+                    f"Вакансия: {r['vacancy_name']} | "
+                    f"Зарплата: {r['salary']} | "
+                    f"Ссылка: {r['url']}"
+                )
+        else:
+            print(f"Вакансий с ключевым словом '{keyword}' не найдено")
 
         database_manage(manager)
 
@@ -134,7 +150,7 @@ def database_manage(manager):
         database_manage(manager)
 
 
-def search_employers():
+def search_employers() -> List[Employer]:
     """Функция поиска компаний"""
 
     print("Для создания новой Базы Данных необходимо выбрать 10 компаний")
