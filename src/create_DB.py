@@ -13,6 +13,34 @@ def get_conn(host: str, database: str, user: str, password: str) -> connection:
     return psycopg2.connect(host=host, database=database, user=user, password=password)
 
 
+def create_database(host: str, database: str, user: str, password: str) -> None:
+
+    conn = psycopg2.connect(host=host, database="postgres", user=user, password=password)
+
+    conn.autocommit = True
+
+    cur = conn.cursor()
+
+    try:
+        cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (database,))
+        cur.execute("""
+                        SELECT pg_terminate_backend(pg_stat_activity.pid)
+                        FROM pg_stat_activity
+                        WHERE pg_stat_activity.datname = %s
+                        AND pid <> pg_backend_pid()
+                    """, (database,))
+        cur.execute(f'DROP DATABASE "{database}"')
+        cur.execute(f'CREATE DATABASE "{database}"')
+
+    except psycopg2.errors.InvalidCatalogName:
+        cur.execute(f'CREATE DATABASE "{database}"')
+
+    cur.close()
+    conn.close()
+
+
+
+
 def clear_database(host: str, database: str, user: str, password: str) -> None:
     """Функция пересоздания Базы Данных"""
 

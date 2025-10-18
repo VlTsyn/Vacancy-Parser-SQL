@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from src.create_DB import clear_database, create_tables
+from src.create_DB import clear_database, create_tables, create_database
 from src.DB_manager import DBManager
 from src.employer import Employer
 from src.hh import HH
@@ -20,6 +20,8 @@ def user_interface() -> None:
         if choice == "1":
 
             params = get_db_params()
+
+            create_database(**params)
 
             clear_database(**params)
 
@@ -180,7 +182,7 @@ def search_employers() -> List[Employer]:
             employer_dict[count] = employer
             print(f"{count} {employer}")
 
-        choice = input("Введите номер компании для записи в Базу Данных: ").strip()
+        choice = input("Введите номера компаний для записи в Базу Данных: ").strip()
         keywords = [k.strip() for k in choice.replace(",", " ").split()]
 
         selected_companies = []
